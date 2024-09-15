@@ -17,7 +17,7 @@ import { generateSqlForAdvisedIndexes } from "./explain/advice";
 import { updateStatusBar } from "../jobManager/statusBar";
 import { ExplainType } from "@ibm/mapepire-js/dist/src/types";
 
-export type StatementQualifier = "statement" | "explain" | "onlyexplain" | "json" | "csv" | "cl" | "sql";
+export type StatementQualifier = "statement" | "explain" | "onlyexplain" | "json" | "csv" | "cl" | "sql" | "rpg";
 
 export interface StatementInfo {
   content: string,
@@ -264,6 +264,7 @@ async function runHandler(options?: StatementInfo) {
               case `csv`:
               case `json`:
               case `sql`:
+              case `rpg`:
                 let content = ``;
                 switch (statementDetail.qualifier) {
                   case `csv`: content = csv.stringify(result.data, {
@@ -300,9 +301,45 @@ async function runHandler(options?: StatementInfo) {
                       content += insertStatement.join(`\n`) + `;\n`;
                     }
                     break;
+
+                  case `rpg`:
+
+                    content = `**free\n\n-- Row data structure\n` 
+                            + `dcl-ds row_t qualified template;\n`;
+
+                    for (let i = 0; i < result.metadata.column_count; i++) {
+                      content += `  ${result.metadata.columns[i].label.toLowerCase()} `;
+                      switch (result.metadata.columns[i].type) {
+                        case `NUMERIC`:
+                          content += `zoned(${result.metadata.columns[i].precision}${result.metadata.columns[i].scale > 0 ? ' : ' + result.metadata.columns[i].scale : ''});\n`;
+                          break;
+                        case `DECIMAL`:
+                          content += `packed(${result.metadata.columns[i].precision}${result.metadata.columns[i].scale > 0 ? ' : ' + result.metadata.columns[i].scale : ''});\n`;
+                          break;
+                        case `CHAR`:
+                          content += `${result.metadata.columns[i].precision > 10 ? 'varchar' : 'char'}(${result.metadata.columns[i].precision});\n`;
+                          break;
+                        case `VARCHAR`:
+                          content += `varchar(${result.metadata.columns[i].precision});\n`;
+                          break;
+                        case `DATE`:
+                          content += `date;\n`;
+                          break;
+                        case `SMALLINT`:
+                          content += `int(5);\n`;
+                          break;
+                        default:
+                          content += `// type:${result.metadata.columns[i].type} precision:${result.metadata.columns[i].precision} scale:${result.metadata.columns[i].scale}\n`;
+                          break;
+                      }
+                    }
+                    content += `end-ds;\n`;
+
+                    break;
+
                 }
 
-                const textDoc = await vscode.workspace.openTextDocument({ language: statementDetail.qualifier, content });
+                const textDoc = await vscode.workspace.openTextDocument({ language: statementDetail.qualifier === 'rpg' ? 'rpgle' : statementDetail.qualifier, content });
                 await vscode.window.showTextDocument(textDoc);
                 chosenView.setLoadingText(`Query executed with ${result.data.length} rows returned.`, false);
                 break;
@@ -379,7 +416,7 @@ export function parseStatement(editor?: vscode.TextEditor, existingInfo?: Statem
     }
 
     if (statementInfo.content) {
-      [`cl`, `json`, `csv`, `sql`, `explain`].forEach(mode => {
+      [`cl`, `json`, `csv`, `sql`, `explain`, `rpg`].forEach(mode => {
         if (statementInfo.content.trim().toLowerCase().startsWith(mode + `:`)) {
           statementInfo.content = statementInfo.content.substring(mode.length + 1).trim();
 
