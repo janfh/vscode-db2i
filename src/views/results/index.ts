@@ -308,7 +308,7 @@ async function runHandler(options?: StatementInfo) {
                             + `dcl-ds row_t qualified template;\n`;
 
                     for (let i = 0; i < result.metadata.column_count; i++) {
-                      content += `  ${result.metadata.columns[i].label.toLowerCase()} `;
+                      content += `  ${isNaN(+result.metadata.columns[i].label.charAt(0)) ? '' : 'col'}${result.metadata.columns[i].label.toLowerCase()} `;
                       switch (result.metadata.columns[i].type) {
                         case `NUMERIC`:
                           content += `zoned(${result.metadata.columns[i].precision}${result.metadata.columns[i].scale > 0 ? ' : ' + result.metadata.columns[i].scale : ''});\n`;
@@ -317,7 +317,7 @@ async function runHandler(options?: StatementInfo) {
                           content += `packed(${result.metadata.columns[i].precision}${result.metadata.columns[i].scale > 0 ? ' : ' + result.metadata.columns[i].scale : ''});\n`;
                           break;
                         case `CHAR`:
-                          content += `${result.metadata.columns[i].precision > 10 ? 'varchar' : 'char'}(${result.metadata.columns[i].precision});\n`;
+                          content += `char(${result.metadata.columns[i].precision});\n`;
                           break;
                         case `VARCHAR`:
                           content += `varchar(${result.metadata.columns[i].precision});\n`;
@@ -325,8 +325,23 @@ async function runHandler(options?: StatementInfo) {
                         case `DATE`:
                           content += `date;\n`;
                           break;
+                        case `TIME`:
+                          content += `time;\n`;
+                          break;
+                        case `TIMESTAMP`:
+                          content += `timestamp;\n`;
+                          break;
                         case `SMALLINT`:
                           content += `int(5);\n`;
+                          break;
+                        case `INTEGER`:
+                          content += `int(10);\n`;
+                          break;
+                        case `BIGINT`:
+                          content += `int(20);\n`;
+                          break;
+                        case `BOOLEAN`:
+                          content += `ind;\n`;
                           break;
                         default:
                           content += `// type:${result.metadata.columns[i].type} precision:${result.metadata.columns[i].precision} scale:${result.metadata.columns[i].scale}\n`;
