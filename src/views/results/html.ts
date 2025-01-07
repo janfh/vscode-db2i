@@ -373,9 +373,9 @@ export function generateScroller(basicSelect: string, isCL: boolean, withCancel?
                   }
 
                   if (data.rows === undefined && totalRows === 0) {
-                    document.getElementById(messageSpanId).innerText = 'Statement executed with no result set returned. Rows affected: ' + data.update_count;
+                    document.getElementById(messageSpanId).innerText = 'Statement executed with no result set returned (' + data.execution_time + ' ms). Rows affected: ' + data.update_count;
                   } else {
-                    document.getElementById(statusId).innerText = (noMoreRows ? ('Loaded ' + totalRows + '. End of data.') : ('Loaded ' + totalRows + '. More available.')) + ' ' + (updateTable ? 'Updatable.' : '');
+                    document.getElementById(statusId).innerText = (noMoreRows ? ('Loaded ' + totalRows + ' rows in ' + data.execution_time + ' ms. End of data.') : ('Loaded ' + totalRows + '. More available.')) + ' ' + (updateTable ? 'Updatable.' : '');
                     document.getElementById(jobId).innerText = data.jobId ? data.jobId : '';
                     document.getElementById(messageSpanId).style.visibility = "hidden";
                   }

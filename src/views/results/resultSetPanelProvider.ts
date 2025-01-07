@@ -111,7 +111,8 @@ export class ResultSetPanelProvider implements WebviewViewProvider {
                   columnHeadings: Configuration.get(`resultsets.columnHeadings`) || 'Name',
                   queryId: this.currentQuery.getId(),
                   update_count: queryResults.update_count,
-                  isDone: queryResults.is_done
+                  isDone: queryResults.is_done,
+                  execution_time: queryResults.execution_time
                 });
               }
 

@@ -265,10 +265,10 @@ async function runHandler(options?: StatementInfo) {
 
           setCancelButtonVisibility(true);
           updateStatusBar({executing: true});
-          const data = await JobManager.runSQL(statementDetail.content);
+          const queryResult = await JobManager.runSQL(statementDetail.content);
           setCancelButtonVisibility(false);
 
-          if (data.length > 0) {
+          if (queryResult.data.length > 0) {
             switch (statementDetail.qualifier) {
 
               case `csv`:
@@ -276,20 +276,20 @@ async function runHandler(options?: StatementInfo) {
               case `sql`:
                 let content = ``;
                 switch (statementDetail.qualifier) {
-                  case `csv`: content = csv.stringify(data, {
+                  case `csv`: content = csv.stringify(queryResult.data, {
                     header: true,
                     quoted_string: true,
                   }); break;
-                  case `json`: content = JSON.stringify(data, null, 2); break;
+                  case `json`: content = JSON.stringify(queryResult.data, null, 2); break;
 
                   case `sql`:
-                    const keys = Object.keys(data[0]);
+                    const keys = Object.keys(queryResult.data[0]);
 
                     // split array into groups of 1k
                     const insertLimit = 1000;
                     const dataChunks = [];
-                    for (let i = 0; i < data.length; i += insertLimit) {
-                      dataChunks.push(data.slice(i, i + insertLimit));
+                    for (let i = 0; i < queryResult.data.length; i += insertLimit) {
+                      dataChunks.push(queryResult.data.slice(i, i + insertLimit));
                     }
 
                     content = `-- Generated ${dataChunks.length} insert statement${dataChunks.length === 1 ? `` : `s`}\n\n`;
@@ -314,7 +314,7 @@ async function runHandler(options?: StatementInfo) {
 
                 const textDoc = await vscode.workspace.openTextDocument({ language: statementDetail.qualifier, content });
                 await vscode.window.showTextDocument(textDoc);
-                chosenView.setLoadingText(`Query executed with ${data.length} rows returned.`, false);
+                chosenView.setLoadingText(`Query executed with ${queryResult.data.length} rows returned in ${queryResult.executionTime} millis.`, false);
                 break;
             }
 
