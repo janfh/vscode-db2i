@@ -314,7 +314,7 @@ async function runHandler(options?: StatementInfo) {
 
                 const textDoc = await vscode.workspace.openTextDocument({ language: statementDetail.qualifier, content });
                 await vscode.window.showTextDocument(textDoc);
-                chosenView.setLoadingText(`Query executed with ${queryResult.data.length} rows returned in ${queryResult.executionTime} millis.`, false);
+                chosenView.setLoadingText(`Query executed with ${queryResult.data.length} rows returned in ${queryResult.execution_time} ms.`, false);
                 break;
             }
 
